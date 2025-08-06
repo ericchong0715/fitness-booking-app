@@ -1,180 +1,255 @@
-// App.tsx
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Container, Table, Button, Form, Row, Col } from 'react-bootstrap';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
+import {
+  Container,
+  Form,
+  Button,
+  Table,
+  Card,
+  Row,
+  Col,
+} from "react-bootstrap";
 
-const API_URL =
-  'https://b8be05fa-034a-46fb-9e53-944045e3f530-00-2xk5c43ij5iui.sisko.replit.dev';
+// This is the constant for the backend API base URL
+const API_URL = "https://fitness-booking-backend.onrender.com/bookings";
 
-type Booking = {
-  id: number;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  phone_number: string;
-  email: string;
-  user_id: string;
-};
+function App() {
+  // This is the state for storing all bookings from the backend
+  const [bookings, setBookings] = useState([]);
 
-export default function App() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [form, setForm] = useState<Partial<Booking>>({});
-  const [editingId, setEditingId] = useState<number | null>(null);
+  // This is the state for managing form input data
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    date: "",
+    time: "",
+    phone_number: "",
+    email: "",
+    user_id: "",
+  });
 
-  // Load bookings on page load
+  // This is the state for tracking if the user is editing a booking
+  const [editId, setEditId] = useState(null);
+
+  // This is the function for fetching bookings on component mount
   useEffect(() => {
     fetchBookings();
   }, []);
 
+  // This is the function for retrieving bookings from the backend API
   const fetchBookings = async () => {
-    const res = await axios.get(`${API_URL}/bookings`);
-    setBookings(res.data);
+    try {
+      const res = await axios.get(API_URL);
+      setBookings(res.data);
+    } catch (err) {
+      console.error("Error fetching bookings:", err);
+    }
   };
 
-  const handleChange = (e: any) => {
+  // This is the function for handling input field changes
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: any) => {
+  // This is the function for submitting the booking form
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingId !== null) {
-      await axios.put(`${API_URL}/bookings/${editingId}`, form);
-      setEditingId(null);
-    } else {
-      await axios.post(`${API_URL}/bookings`, form);
+
+    try {
+      if (editId) {
+        // This is the function for updating an existing booking
+        await axios.put(`${API_URL}/${editId}`, form);
+        setEditId(null);
+      } else {
+        // This is the function for creating a new booking
+        await axios.post(API_URL, form);
+      }
+
+      // This is the function for resetting the form and refreshing data
+      setForm({
+        title: "",
+        description: "",
+        date: "",
+        time: "",
+        phone_number: "",
+        email: "",
+        user_id: "",
+      });
+      fetchBookings();
+    } catch (err) {
+      console.error("Error saving booking:", err);
     }
-    setForm({});
-    fetchBookings();
   };
 
-  const handleEdit = (booking: Booking) => {
+  // This is the function for populating the form with an existing booking to edit
+  const handleEdit = (booking) => {
     setForm(booking);
-    setEditingId(booking.id);
+    setEditId(booking.id);
   };
 
-  const handleDelete = async (id: number) => {
-    await axios.delete(`${API_URL}/bookings/${id}`);
-    fetchBookings();
+  // This is the function for deleting a booking
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      fetchBookings();
+    } catch (err) {
+      console.error("Error deleting booking:", err);
+    }
   };
 
   return (
-    <Container className="mt-4">
-      <h2 className="text-center mb-4">Fitness & Wellness Booking System</h2>
+    <Container className="py-4">
+      <Card className="p-4 shadow rounded-4 bg-light">
+        <h2 className="text-center mb-4">
+          Fitness & Wellness Booking System
+        </h2>
 
-      <Form onSubmit={handleSubmit}>
-        <Row>
-          <Col>
+        {/* This is the booking form section */}
+        <Form onSubmit={handleSubmit}>
+          <Form.Group className="mb-2">
             <Form.Control
-              placeholder="Title"
+              type="text"
               name="title"
-              value={form.title || ''}
+              placeholder="Title"
+              value={form.title}
               onChange={handleChange}
               required
             />
-          </Col>
-          <Col>
-            <Form.Control
-              placeholder="Description"
-              name="description"
-              value={form.description || ''}
-              onChange={handleChange}
-            />
-          </Col>
-        </Row>
-        <Row className="mt-2">
-          <Col>
-            <Form.Control
-              placeholder="Date"
-              name="date"
-              value={form.date || ''}
-              onChange={handleChange}
-            />
-          </Col>
-          <Col>
-            <Form.Control
-              placeholder="Time"
-              name="time"
-              value={form.time || ''}
-              onChange={handleChange}
-            />
-          </Col>
-        </Row>
-        <Row className="mt-2">
-          <Col>
-            <Form.Control
-              placeholder="Phone Number"
-              name="phone_number"
-              value={form.phone_number || ''}
-              onChange={handleChange}
-            />
-          </Col>
-          <Col>
-            <Form.Control
-              placeholder="Email"
-              name="email"
-              value={form.email || ''}
-              onChange={handleChange}
-            />
-          </Col>
-          <Col>
-            <Form.Control
-              placeholder="User ID"
-              name="user_id"
-              value={form.user_id || ''}
-              onChange={handleChange}
-            />
-          </Col>
-        </Row>
-        <Button className="mt-3" variant="primary" type="submit">
-          {editingId ? 'Update Booking' : 'Add Booking'}
-        </Button>
-      </Form>
+          </Form.Group>
 
-      <Table striped bordered hover className="mt-4">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Phone</th>
-            <th>Email</th>
-            <th>User ID</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bookings.map((b) => (
-            <tr key={b.id}>
-              <td>{b.title}</td>
-              <td>{b.description}</td>
-              <td>{b.date}</td>
-              <td>{b.time}</td>
-              <td>{b.phone_number}</td>
-              <td>{b.email}</td>
-              <td>{b.user_id}</td>
-              <td>
-                <Button
-                  size="sm"
-                  onClick={() => handleEdit(b)}
-                  variant="warning"
-                  className="me-2"
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleDelete(b.id)}
-                  variant="danger"
-                >
-                  Delete
-                </Button>
-              </td>
+          <Form.Group className="mb-2">
+            <Form.Control
+              type="text"
+              name="description"
+              placeholder="Description"
+              value={form.description}
+              onChange={handleChange}
+              required
+            />
+          </Form.Group>
+
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-2">
+                <Form.Control
+                  type="date"
+                  name="date"
+                  value={form.date}
+                  onChange={handleChange}
+                  required
+                />
+              </Form.Group>
+            </Col>
+            <Col md={6}>
+              <Form.Group className="mb-2">
+                <Form.Control
+                  type="time"
+                  name="time"
+                  value={form.time}
+                  onChange={handleChange}
+                  required
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Form.Group className="mb-2">
+            <Form.Control
+              type="text"
+              name="phone_number"
+              placeholder="Phone Number"
+              value={form.phone_number}
+              onChange={handleChange}
+              required
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-2">
+            <Form.Control
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Control
+              type="text"
+              name="user_id"
+              placeholder="User ID"
+              value={form.user_id}
+              onChange={handleChange}
+              required
+            />
+          </Form.Group>
+
+          <Button type="submit" className="w-100" variant="primary">
+            {editId ? "Update Booking" : "Book"}
+          </Button>
+        </Form>
+
+        <hr />
+
+        {/* This is the table for displaying bookings */}
+        <Table
+          striped
+          bordered
+          hover
+          responsive
+          className="mt-4 bg-white rounded-3"
+        >
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>User ID</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {bookings.map((booking, index) => (
+              <tr key={booking.id}>
+                <td>{index + 1}</td>
+                <td>{booking.title}</td>
+                <td>{booking.description}</td>
+                <td>{booking.date}</td>
+                <td>{booking.time}</td>
+                <td>{booking.phone_number}</td>
+                <td>{booking.email}</td>
+                <td>{booking.user_id}</td>
+                <td>
+                  <Button
+                    variant="warning"
+                    size="sm"
+                    className="me-2"
+                    onClick={() => handleEdit(booking)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDelete(booking.id)}
+                  >
+                    Delete
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Card>
     </Container>
   );
 }
+
+export default App;
