@@ -1,11 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-input {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5;
-}
-
 body {
-  margin: 8px;
-}
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
+  }
+  
